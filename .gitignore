@@ -32,3 +32,5 @@ backend/node_modules/
 
 # Images (for dev purposes)
 /images/
+/postgis-db/
+python_scripts/
