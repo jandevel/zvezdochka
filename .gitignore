@@ -31,6 +31,7 @@ frontend/node_modules/
 backend/node_modules/
 
 # Images (for dev purposes)
-/images/
-/postgis-db/
-python_scripts/
+backend/assets/
+
+# Databse (for dev purposes)
+postgis-db/
