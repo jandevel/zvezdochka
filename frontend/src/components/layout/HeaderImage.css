@@ -1,0 +1,7 @@
+.header-image {
+    position: relative;
+    width: 100%;
+    height: 20vh;  /* 20% of the viewport height */
+    overflow: hidden;  /* This will hide any part of the image that overflows */
+    background-color: #9ba6b0;
+  }
