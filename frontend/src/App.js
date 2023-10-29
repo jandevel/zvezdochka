@@ -1,6 +1,18 @@
+import React from "react";
+
+import NavigationMenu from "./components/layout/NavigationMenu";
+import HeaderImage from "./components/layout/HeaderImage";
+import GPXTracksMap from "./components/layout/MapWidget";
+import TestApp from "./components/layout/TestWidget";
+
 function App() {
   return (
-    <div>Hello World!</div>
+    <div>
+      <NavigationMenu />
+      <HeaderImage />
+      <GPXTracksMap />
+      {/* <TestApp /> */}
+    </div>
   );
 }
 
