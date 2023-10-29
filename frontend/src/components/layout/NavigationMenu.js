@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 import './NavigationMenu.css';
 
@@ -8,14 +9,14 @@ function NavigationMenu() {
         <div className='logo'>Bicycle Club "Zvezdochka"</div>
             <nav>
                 <ul>
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/cycling">Cycling</a></li>
-                    <li><a href="/travel">Travel & Hiking</a></li>
-                    <li><a href="/routes">Routes</a></li>
-                    <li><a href="/photo_map">Photo Map</a></li>
-                    <li><a href="/gallery">Gallery</a></li>
-                    <li><a href="/other">Other</a></li>
-                    <li><a href="/admin_panel">Admin Panel</a></li>
+                <li><Link to="/">Home</Link></li>
+                    <li><Link to="/cycling">Cycling</Link></li>
+                    <li><Link to="/travel">Travel & Hiking</Link></li>
+                    <li><Link to="/routes">Routes</Link></li>
+                    <li><Link to="/photo_map">Photo Map</Link></li>
+                    <li><Link to="/gallery">Gallery</Link></li>
+                    <li><Link to="/other">Other</Link></li>
+                    <li><Link to="/admin_panel">Admin Panel</Link></li>
                 </ul>
             </nav>
         </header>
