@@ -10,6 +10,11 @@
   "author": "Dmitrii Petukhov",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
     "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "pg": "^8.11.3"
   }
 }
