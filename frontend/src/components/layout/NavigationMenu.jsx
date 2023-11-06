@@ -9,7 +9,7 @@ function NavigationMenu() {
         <div className='logo'>Bicycle Club "Zvezdochka"</div>
             <nav>
                 <ul>
-                <li><Link to="/">Home</Link></li>
+                    <li><Link to="/">Home</Link></li>
                     <li><Link to="/cycling">Cycling</Link></li>
                     <li><Link to="/travel">Travel & Hiking</Link></li>
                     <li><Link to="/routes">Routes</Link></li>

@@ -32,6 +32,7 @@ backend/node_modules/
 
 # Images (for dev purposes)
 backend/assets/
+frontend/src/assets/
 
 # Databse (for dev purposes)
 postgis-db/
