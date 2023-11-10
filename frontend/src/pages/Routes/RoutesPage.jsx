@@ -1,5 +1,5 @@
 import React from "react";
-import MapWidget from "../../components/map/MapWidget.jsx";
+import MapWidget from "./components/MapWidget.jsx";
 
 const RoutesPage = () => {
   return (
