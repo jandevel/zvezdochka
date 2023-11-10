@@ -18,21 +18,31 @@ function NavigationMenu() {
             <Link to="/routes">Routes</Link>
           </li>
           <li>
-            <Link to="/photo_map">Photo Map</Link>
+            <Link to="/photo-map">Photo Map</Link>
           </li>
           <li>
             <Link to="/gallery">Gallery</Link>
             <div className="submenu">
-              <Link to="/best-pictures">Best Pictures</Link>
-              <Link to="/albums">Albums</Link>
-              <Link to="/random-slideshow">Random Slideshow</Link>
+              <Link to="/gallery/best-pictures">Best Pictures</Link>
+              <Link to="/gallery/albums">Albums</Link>
+              <Link to="/gallery/random-slideshow">Random Slideshow</Link>
             </div>
           </li>
           <li>
             <Link to="/other">Other</Link>
+            <div className="submenu">
+              <Link to="/other/bikes-and-gear">Bikes & Gear</Link>
+              <Link to="/other/statistics">Statistics</Link>
+              <Link to="/other/weather">Weather</Link>
+            </div>
           </li>
           <li>
-            <Link to="/admin_panel">Admin Panel</Link>
+            <Link to="/admin-panel">Admin Panel</Link>
+            <div className="submenu">
+              <Link to="/admin-panel/yearly-albums">Yearly Albums</Link>
+              <Link to="/admin-panel/upload-event">Upload Event</Link>
+              <Link to="/admin-panel/maintenance-log">Maintenance Log</Link>
+            </div>
           </li>
         </ul>
       </nav>
