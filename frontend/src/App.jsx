@@ -1,21 +1,20 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-import NavigationMenu from "./components/layout/NavigationMenu";
-import HeaderImage from "./components/layout/HeaderImage";
-import GPXTracksMap from "./components/map/MapWidget";
+import Layout from "./components/layout/Layout";
+import EventsPage from "./pages/Events/EventsPage";
+import RoutesPage from "./pages/Routes/RoutesPage";
+import PhotoMapPage from "./pages/PhotoMap/PhotoMapPage";
 // import TestApp from "./components/layout/TestWidget";
 
 function App() {
   return (
     <Router>
-      <div>
-        <NavigationMenu />
-        <Routes>
-          <Route path="/" element={<HeaderImage />} />
-          <Route path="/routes" element={<GPXTracksMap />} />
-        </Routes>  
-      </div>
+      <Routes>
+        <Route path="/" element={<Layout><EventsPage /></Layout>} />
+        <Route path="/routes" element={<Layout><RoutesPage /></Layout>} />
+        <Route path="/photo_map" element={<Layout><PhotoMapPage /></Layout>} />
+      </Routes>
     </Router>
   );
 }
