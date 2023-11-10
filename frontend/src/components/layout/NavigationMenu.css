@@ -1,12 +1,16 @@
 .main-header {
     width: 100%;
-    height: 4rem;
+    height: var(--nav-height);
     display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;    
     align-items: center;
     justify-content: space-between;
     background-color: white;
     padding: 0 10%;
     border-bottom: 1px solid #ddd;
+    z-index: 1000;
   }
   
   .main-header__logo_container {
@@ -26,8 +30,49 @@
   }
   
   .navigation-menu li {
-    padding: 0 15px; /* Spacing between menu items */
+    position: relative;
+    padding: 0 1rem; /* Spacing between menu items */
     font-weight: bold;
+  }
+
+  .navigation-menu li .submenu {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 100%; /* Position right below the parent menu item */
+    background-color: white;
+    /* border: 1px solid #ccc; */
+    min-width: 160px; /* Set a min-width for submenu */
+    z-index: 1000; /* Ensure submenu is on top */
+    border-radius: 8px;
+    font-weight: normal;
+    /* box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2); */
+  }
+  
+  .navigation-menu li:hover .submenu {
+    display: block; /* Display submenu on hover */
+  }
+
+  .submenu a {
+    padding: 10px 15px;
+    display: block; /* Make each submenu item block level for full width interaction */
+    color: #333; /* Text color for submenu items */
+    text-decoration: none;
+    white-space: nowrap; /* Prevents wrapping of submenu text */
+    font-size: 0.9em;
+  }
+  
+  .submenu a:first-child {
+    margin-top: 30px; /* Adds space above the first submenu item */
+  }
+
+  .submenu a:last-child {
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+  }
+
+  .submenu a:hover {
+    background-color: #f2f2f2; /* Background color for submenu items on hover */
   }
   
   .navigation-menu a {
@@ -42,35 +87,3 @@
     border-radius: 50%; /* Circle shape */
     cursor: pointer;
   }
-  
-  /* .header ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    align-items: baseline;
-  }
-  
-  .header li {
-    margin-left: 3rem;
-  }
-  
-  .header a {
-    text-decoration: none;
-    font-size: 1.5rem;
-    color: #fdf9fb;
-  }
-  
-  .header a:hover,
-  .header a:active,
-  .header a.active {
-    color: rgb(11, 11, 11);
-  }
-  
-  .badge {
-    background-color: #cc2062;
-    color: white;
-    border-radius: 12px;
-    padding: 0 1rem;
-    margin-left: 0.5rem;
-  } */

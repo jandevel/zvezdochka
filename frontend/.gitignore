@@ -23,5 +23,5 @@ yarn-debug.log*
 yarn-error.log*
 
 # test widget
-/src/components/layout/TestWidget.jsx
-/src/components/layout/TestWidget.css
+/src/components/dev/TestWidget.jsx
+/src/components/dev/TestWidget.css
