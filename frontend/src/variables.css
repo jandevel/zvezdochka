@@ -1,3 +1,5 @@
 :root {
   --nav-height: 4rem;
+  --event-card-height: 15rem;
+  --event-card-image-column-width: 18.3rem;
 }
