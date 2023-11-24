@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 
-import "leaflet/dist/leaflet.css";
 import "./MapWidget.css";
+import OsmMap from "../../../components/common/OsmMap";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 const POSITION = [43.653, -79.38];
@@ -25,16 +24,8 @@ const GPXTracksMap = () => {
   }, []);
 
   return (
-    <div>
-      <MapContainer className="map" zoom={ZOOM} center={POSITION}>
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {tracks.map((track, idx) => (
-          <GeoJSON key={idx} data={track} />
-        ))}
-      </MapContainer>
+    <div className="custom-map-container">
+      <OsmMap center={POSITION} zoom={ZOOM} tracks={tracks} />
     </div>
   );
 };
