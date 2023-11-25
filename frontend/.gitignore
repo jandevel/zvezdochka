@@ -25,3 +25,6 @@ yarn-error.log*
 # test widget
 /src/components/dev/TestWidget.jsx
 /src/components/dev/TestWidget.css
+
+# dummy data
+/src/pages/Events/data.js

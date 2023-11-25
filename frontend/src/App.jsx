@@ -18,7 +18,7 @@ import AdminPanelYearlyAlbumsPage from "./pages/AdminPanelYearlyAlbums/AdminPane
 import AdminPanelUploadEventPage from "./pages/AdminPanelUploadEvent/AdminPanelUploadEventPage";
 import AdminPanelMaintenanceLogPage from "./pages/AdminPanelMaintenanceLog/AdminPanelMaintenanceLogPage";
 
-// import TestApp from "./components/layout/TestWidget";
+import TestWidget from "./components/dev/TestWidget";
 
 function App() {
   return (
@@ -39,6 +39,7 @@ function App() {
         <Route path="/admin-panel/yearly-albums" element={<Layout><AdminPanelYearlyAlbumsPage /></Layout>} />
         <Route path="/admin-panel/upload-event" element={<Layout><AdminPanelUploadEventPage /></Layout>} />
         <Route path="/admin-panel/maintenance-log" element={<Layout><AdminPanelMaintenanceLogPage /></Layout>} />
+        <Route path="/test" element={<Layout><TestWidget /></Layout>} />
       </Routes>
     </Router>
   );
