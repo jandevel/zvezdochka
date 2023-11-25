@@ -28,11 +28,39 @@ const StatisticsUpload = () => {
 
   function handleChange(inputIdentifier, newValue) {
     setEventInput((prevEventInput) => {
-      return {
+      const updatedEventInput = {
         ...prevEventInput,
         [inputIdentifier]: newValue,
       };
+  
+      // If any of the date or time inputs change, recalculate total time
+      if (['eventStartDate', 'eventEndDate', 'eventStartTime', 'eventEndTime'].includes(inputIdentifier)) {
+        updatedEventInput.eventTimeTotal = calculateTotalTime(updatedEventInput);
+      }
+  
+      return updatedEventInput;
     });
+  }
+
+  function calculateTotalTime(eventInput) {
+    const startDate = eventInput.eventStartDate;
+    const endDate = eventInput.eventEndDate || startDate; // Use startDate if endDate is null
+    const startTime = eventInput.eventStartTime;
+    const endTime = eventInput.eventEndTime;
+  
+    if (startDate && endDate && startTime && endTime) {
+      const start = new Date(startDate + ' ' + startTime);
+      const end = new Date(endDate + ' ' + endTime);
+      const diff = end - start;
+  
+      if (diff > 0) {
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff / (1000 * 60)) % 60);
+        return `${hours}:${minutes}`;
+      }
+    }
+  
+    return null;
   }
 
   return (
@@ -145,12 +173,10 @@ const StatisticsUpload = () => {
         <section id="event-time-total">
           <label htmlFor="event-time-total__input">Time Total</label>
           <input
-            type="time"
+            type="text"
             id="event-time-total__input"
-            value={eventInput.eventTimeTotal}
-            onChange={(event) =>
-              handleChange("eventTimeTotal", event.target.value)
-            }
+            value={eventInput.eventTimeTotal || ''} // Fallback to empty string if null
+            readOnly
           />
         </section>
         <section id="event-time-motion">
