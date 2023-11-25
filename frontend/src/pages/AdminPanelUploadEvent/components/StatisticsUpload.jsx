@@ -1,30 +1,62 @@
 import { useState } from "react";
 import "./StatisticsUpload.css";
-// import axios from "axios";
+import axios from "axios";
 
-// const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const StatisticsUpload = () => {
   const [eventInput, setEventInput] = useState({
-    eventTitle: null,
-    eventID: null,
-    eventType: null,
-    eventDuration: null,
-    eventStartDate: null,
-    eventEndDate: null,
-    eventStartTime: null,
-    eventEndTime: null,
-    eventDistance: null,
-    eventCommute: null,
-    eventTimeTotal: null,
-    eventTimeMotion: null,
-    eventAvgSpeed: null,
-    eventAvgSpeedMotion: null,
-    eventDownhill: null,
-    eventUphill: null,
-    eventMinAltitude: null,
-    eventMaxAltitude: null,
+    eventTitle: "",
+    eventID: "",
+    eventType: "0",
+    eventDuration: "0",
+    eventStartDate: "",
+    eventEndDate: "",
+    eventStartTime: "",
+    eventEndTime: "",
+    eventDistance: "",
+    eventCommute: "",
+    eventTimeTotal: "",
+    eventTimeMotion: "",
+    eventAvgSpeed: "",
+    eventAvgSpeedMotion: "",
+    eventDownhill: "",
+    eventUphill: "",
+    eventMinAltitude: "",
+    eventMaxAltitude: "",
   });
+
+  // Inside your component
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    // Create a FormData object to hold your data
+    const formData = new FormData();
+
+    // Append event data to formData
+    Object.keys(eventInput).forEach((key) => {
+      formData.append(key, eventInput[key]);
+    });
+
+    // TODO: Append files to formData
+    // formData.append('images', /* your images */);
+    // formData.append('gpxFiles', /* your GPX files */);
+    console.log(formData);
+    try {
+      // Send POST request to your backend
+      await axios.post(`${API_BASE_URL}/api/upload-event`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      // Handle successful upload (e.g., show a message or redirect)
+      console.log("Event uploaded successfully!");
+    } catch (error) {
+      // Handle errors (e.g., show error message)
+      console.error(error);
+    }
+  };
 
   function handleChange(inputIdentifier, newValue) {
     setEventInput((prevEventInput) => {
@@ -32,6 +64,8 @@ const StatisticsUpload = () => {
         ...prevEventInput,
         [inputIdentifier]: newValue,
       };
+      // console.log(prevEventInput);
+      // console.log(updatedEventInput);
 
       // If any of the date or time inputs change, recalculate total time
       if (
@@ -85,52 +119,72 @@ const StatisticsUpload = () => {
         const hours = Math.floor(diff / (1000 * 60 * 60));
         let minutes = Math.floor((diff / (1000 * 60)) % 60);
         // Ensure two-digit minutes
-        minutes = minutes.toString().padStart(2, '0');
+        minutes = minutes.toString().padStart(2, "0");
         return `${hours}:${minutes}`;
       }
     }
 
-    return null;
+    return "";
   }
 
   function calculateAverageSpeed(eventInput) {
     const distance = parseFloat(eventInput.eventDistance);
     const timeTotal = eventInput.eventTimeTotal;
 
-    if (!isNaN(distance) && timeTotal) {
-      const [hours, minutes] = timeTotal.split(":").map(Number);
-      const totalTimeHours = hours + minutes / 60;
-
-      if (totalTimeHours > 0) {
-        const avgSpeed = distance / totalTimeHours;
-        return avgSpeed.toFixed(1); // One decimal place
-      }
+    // Check if distance is a number and timeTotal is not empty and includes ":"
+    if (isNaN(distance) || !timeTotal || !timeTotal.includes(":")) {
+      return "";
     }
 
-    return null;
+    const [hours, minutes] = timeTotal.split(":").map(Number);
+
+    // Check if hours and minutes are numbers
+    if (isNaN(hours) || isNaN(minutes)) {
+      return "";
+    }
+
+    const totalTimeHours = hours + minutes / 60;
+
+    // Check if totalTimeHours is greater than 0 to avoid division by zero
+    if (totalTimeHours <= 0) {
+      return "";
+    }
+
+    const avgSpeedTotal = distance / totalTimeHours;
+    return avgSpeedTotal.toFixed(1); // One decimal place
   }
 
   function calculateAverageSpeedMotion(eventInput) {
     const distance = parseFloat(eventInput.eventDistance);
     const timeMotion = eventInput.eventTimeMotion;
 
-    if (!isNaN(distance) && timeMotion) {
-      const [hours, minutes] = timeMotion.split(":").map(Number);
-      const totalMotionHours = hours + minutes / 60;
-
-      if (totalMotionHours > 0) {
-        const avgSpeedMotion = distance / totalMotionHours;
-        return avgSpeedMotion.toFixed(1); // One decimal place
-      }
+    // Check if distance is a number and timeMotion is not empty and includes ":"
+    if (isNaN(distance) || !timeMotion || !timeMotion.includes(":")) {
+      return "";
     }
 
-    return null;
+    const [hours, minutes] = timeMotion.split(":").map(Number);
+
+    // Check if hours and minutes are numbers
+    if (isNaN(hours) || isNaN(minutes)) {
+      return "";
+    }
+
+    const totalMotionHours = hours + minutes / 60;
+
+    // Check if totalMotionHours is greater than 0 to avoid division by zero
+    if (totalMotionHours <= 0) {
+      return "";
+    }
+
+    const avgSpeedMotion = distance / totalMotionHours;
+    return avgSpeedMotion.toFixed(1); // One decimal place
   }
 
   return (
     <>
       <p className="upload-event-title">Upload Event</p>
-      <form className="upload-event-form">
+      <form className="upload-event-form" onSubmit={handleSubmit}>
         <section id="event-title">
           <label htmlFor="event-title__input">Title</label>
           <input
@@ -153,7 +207,12 @@ const StatisticsUpload = () => {
         </section>
         <section id="event-type">
           <label htmlFor="event-type__select">Event Type</label>
-          <select id="event-type__select" required>
+          <select
+            id="event-type__select"
+            required
+            value={eventInput.eventType}
+            onChange={(event) => handleChange("eventType", event.target.value)}
+          >
             <option value="0">Cycling</option>
             <option value="1">Travel & Hiking</option>
             <option value="2">Year</option>
@@ -161,7 +220,14 @@ const StatisticsUpload = () => {
         </section>
         <section id="event-duration">
           <label htmlFor="event-duration__select">Event Duration</label>
-          <select id="event-duration__select" required>
+          <select
+            id="event-duration__select"
+            required
+            value={eventInput.eventDuration}
+            onChange={(event) =>
+              handleChange("eventDuration", event.target.value)
+            }
+          >
             <option value="0">One-Day</option>
             <option value="1">Multi-Day</option>
             <option value="2">Long-Haul</option>
@@ -336,7 +402,7 @@ const StatisticsUpload = () => {
             // onChange={(event) => handleFileChange(event.target.files)}
           />
         </section>
-        <button type="submit" class="button">
+        <button type="submit" className="button">
           Upload Event
         </button>
       </form>
