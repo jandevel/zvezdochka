@@ -1,10 +1,11 @@
 import React from "react";
-import UnderConstruction from "../../components/common/UnderConstruction.jsx";
+import StatisticsUpload from "./components/StatisticsUpload.jsx";
+// import ImageUpload from "./components/ImageUpload.jsx";
 
 const AdminPanelUploadEventPage = () => {
   return (
     <>
-      <UnderConstruction />
+      <StatisticsUpload />
     </>
   );
 };
