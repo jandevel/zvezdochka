@@ -32,12 +32,40 @@ const StatisticsUpload = () => {
         ...prevEventInput,
         [inputIdentifier]: newValue,
       };
-  
+
       // If any of the date or time inputs change, recalculate total time
-      if (['eventStartDate', 'eventEndDate', 'eventStartTime', 'eventEndTime'].includes(inputIdentifier)) {
-        updatedEventInput.eventTimeTotal = calculateTotalTime(updatedEventInput);
+      if (
+        [
+          "eventStartDate",
+          "eventEndDate",
+          "eventStartTime",
+          "eventEndTime",
+        ].includes(inputIdentifier)
+      ) {
+        updatedEventInput.eventTimeTotal =
+          calculateTotalTime(updatedEventInput);
       }
-  
+
+      // Recalculate average speed if distance changes or any inputs affecting total time change
+      if (
+        [
+          "eventDistance",
+          "eventStartDate",
+          "eventEndDate",
+          "eventStartTime",
+          "eventEndTime",
+        ].includes(inputIdentifier)
+      ) {
+        updatedEventInput.eventAvgSpeed =
+          calculateAverageSpeed(updatedEventInput);
+      }
+
+      // Recalculate average speed for motion if distance changes or eventTimeMotion changes
+      if (["eventDistance", "eventTimeMotion"].includes(inputIdentifier)) {
+        updatedEventInput.eventAvgSpeedMotion =
+          calculateAverageSpeedMotion(updatedEventInput);
+      }
+
       return updatedEventInput;
     });
   }
@@ -47,19 +75,55 @@ const StatisticsUpload = () => {
     const endDate = eventInput.eventEndDate || startDate; // Use startDate if endDate is null
     const startTime = eventInput.eventStartTime;
     const endTime = eventInput.eventEndTime;
-  
+
     if (startDate && endDate && startTime && endTime) {
-      const start = new Date(startDate + ' ' + startTime);
-      const end = new Date(endDate + ' ' + endTime);
+      const start = new Date(startDate + " " + startTime);
+      const end = new Date(endDate + " " + endTime);
       const diff = end - start;
-  
+
       if (diff > 0) {
         const hours = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor((diff / (1000 * 60)) % 60);
+        let minutes = Math.floor((diff / (1000 * 60)) % 60);
+        // Ensure two-digit minutes
+        minutes = minutes.toString().padStart(2, '0');
         return `${hours}:${minutes}`;
       }
     }
-  
+
+    return null;
+  }
+
+  function calculateAverageSpeed(eventInput) {
+    const distance = parseFloat(eventInput.eventDistance);
+    const timeTotal = eventInput.eventTimeTotal;
+
+    if (!isNaN(distance) && timeTotal) {
+      const [hours, minutes] = timeTotal.split(":").map(Number);
+      const totalTimeHours = hours + minutes / 60;
+
+      if (totalTimeHours > 0) {
+        const avgSpeed = distance / totalTimeHours;
+        return avgSpeed.toFixed(1); // One decimal place
+      }
+    }
+
+    return null;
+  }
+
+  function calculateAverageSpeedMotion(eventInput) {
+    const distance = parseFloat(eventInput.eventDistance);
+    const timeMotion = eventInput.eventTimeMotion;
+
+    if (!isNaN(distance) && timeMotion) {
+      const [hours, minutes] = timeMotion.split(":").map(Number);
+      const totalMotionHours = hours + minutes / 60;
+
+      if (totalMotionHours > 0) {
+        const avgSpeedMotion = distance / totalMotionHours;
+        return avgSpeedMotion.toFixed(1); // One decimal place
+      }
+    }
+
     return null;
   }
 
@@ -175,14 +239,14 @@ const StatisticsUpload = () => {
           <input
             type="text"
             id="event-time-total__input"
-            value={eventInput.eventTimeTotal || ''} // Fallback to empty string if null
+            value={eventInput.eventTimeTotal || ""} // Fallback to empty string if null
             readOnly
           />
         </section>
         <section id="event-time-motion">
           <label htmlFor="event-time-motion__input">Time Motion</label>
           <input
-            type="time"
+            type="text"
             id="event-time-motion__input"
             value={eventInput.eventTimeMotion}
             onChange={(event) =>
@@ -196,20 +260,18 @@ const StatisticsUpload = () => {
             type="number"
             id="event-avg-speed__input"
             value={eventInput.eventAvgSpeed}
-            onChange={(event) =>
-              handleChange("eventAvgSpeed", event.target.value)
-            }
+            readOnly
           />
         </section>
         <section id="event-avg-speed-motion">
-          <label htmlFor="event-avg-speed-motion__input">Average Speed Motion</label>
+          <label htmlFor="event-avg-speed-motion__input">
+            Average Speed Motion
+          </label>
           <input
             type="number"
             id="event-avg-speed-motion__input"
             value={eventInput.eventAvgSpeedMotion}
-            onChange={(event) =>
-              handleChange("eventAvgSpeedMotion", event.target.value)
-            }
+            readOnly
           />
         </section>
         <section id="event-downhill">

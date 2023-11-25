@@ -49,6 +49,11 @@
     margin-bottom: 10px; /* Space below file inputs */
   }
 
+  .upload-event-form input[type="date"],
+  .upload-event-form input[type="time"] {
+    font-family: "MS Shell Dlg 2";
+  }
+
   #event-title {
     grid-area: title;
   }
