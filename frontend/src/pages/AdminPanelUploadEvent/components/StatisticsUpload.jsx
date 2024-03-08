@@ -26,6 +26,18 @@ const StatisticsUpload = () => {
     eventMaxAltitude: "",
   });
 
+  const [fileInput, setFileInput] = useState({
+    images: [],
+    gpxFiles: [],
+  });
+  
+  const handleFileChange = (type, files) => {
+    setFileInput((prevFileInput) => ({
+      ...prevFileInput,
+      [type]: files,
+    }));
+  };  
+
   // Inside your component
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -38,10 +50,15 @@ const StatisticsUpload = () => {
       formData.append(key, eventInput[key]);
     });
 
+    Object.keys(fileInput).forEach((key) => {
+      Array.from(fileInput[key]).forEach((file) => {
+        formData.append(key, file);
+      });
+    });
     // TODO: Append files to formData
     // formData.append('images', /* your images */);
     // formData.append('gpxFiles', /* your GPX files */);
-    console.log(formData);
+    // console.log(formData);
     try {
       // Send POST request to your backend
       await axios.post(`${API_BASE_URL}/api/upload-event`, formData, {
@@ -390,7 +407,7 @@ const StatisticsUpload = () => {
             type="file"
             id="event-images__input"
             multiple
-            // onChange={(event) => handleFileChange(event.target.files)}
+            onChange={(event) => handleFileChange('images', event.target.files)}
           />
         </section>
         <section id="event-gpx-files">
@@ -399,7 +416,7 @@ const StatisticsUpload = () => {
             type="file"
             id="event-gpx-files__input"
             multiple
-            // onChange={(event) => handleFileChange(event.target.files)}
+            onChange={(event) => handleFileChange('gpxFiles', event.target.files)}
           />
         </section>
         <button type="submit" className="button">
