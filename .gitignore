@@ -37,4 +37,4 @@ frontend/src/assets/
 # Databse (for dev purposes)
 postgis-db/
 
-backend/utils/test.js
+backend/util/test.js
