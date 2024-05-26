@@ -17,6 +17,7 @@ try {
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT,
   });
+  console.log(`Database initialized: ${pool.options.host}`);
 
   module.exports = pool;
 } catch (error) {

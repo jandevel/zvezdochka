@@ -13,7 +13,8 @@
     max-width: 1000px; /* Adjust the form width as per your requirement */
     margin: auto; /* Center the form in the middle of the page */
     grid-template-columns: repeat(4, 1fr);
-    grid-template-areas: "title title event-id ."
+    grid-template-areas: "title-ru title-ru . ."
+                         "title-en title-en event-id youtube-link"
                          "event-type event-duration distance commute"
                          "start-date end-date . ."
                          "start-time end-time . ."
@@ -52,15 +53,23 @@
   .upload-event-form input[type="date"],
   .upload-event-form input[type="time"] {
     font-family: "MS Shell Dlg 2";
+  
+  }
+  #event-title-ru {
+    grid-area: title-ru;
   }
 
-  #event-title {
-    grid-area: title;
+  #event-title-en {
+    grid-area: title-en;
   }
 
   #event-id {
     grid-area: event-id;
   }
+
+  #youtube-link {
+    grid-area: youtube-link;
+  }  
 
   #event-type {
     grid-area: event-type;

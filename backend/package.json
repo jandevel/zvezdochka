@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "start:dev": "ZDK_ENV=dev node server.js",
+    "start:prod": "ZDK_ENV=prod node server.js"
   },
   "author": "Dmitrii Petukhov",
   "license": "ISC",

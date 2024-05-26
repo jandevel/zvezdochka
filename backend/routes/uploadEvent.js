@@ -8,6 +8,31 @@ const EXIF = require('exif-js');
 const pool = require("../util/db");
 
 const router = express.Router();
+// const MulterAzureStorage = require('multer-azure-blob-storage').MulterAzureStorage;
+
+// let storage;
+
+// if (process.env.NODE_ENV === 'local') {
+//   // Local storage configuration
+//   storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//       cb(null, './assets/temp_upload');
+//     },
+//     filename: function (req, file, cb) {
+//       cb(null, file.originalname);
+//     }
+//   });
+// } else {
+//   // Azure Blob Storage configuration
+//   storage = new MulterAzureStorage({
+//     azureStorageConnectionString: process.env.AZURE_STORAGE_CONNECTION_STRING,
+//     containerName: 'your-container-name',
+//     containerSecurity: 'blob',  // can be 'blob' or 'container'
+//     blobName: function(req, file, cb) {
+//       cb(null, file.originalname);
+//     }
+//   });
+// }
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, './assets/temp_upload');
@@ -20,17 +45,60 @@ const upload = multer({ storage: storage });
 
 
 function convertTimestampToPostgresFormat(str) {
-  // Extract date and time parts
-  const [datePart, timePart, subsecPart] = str.split(' ');
-  const formattedDate = datePart.replace(/:/g, '-');
-  return `${formattedDate} ${timePart}.${subsecPart}`;
+  // Check if the input is a Unix timestamp (all digits and possibly a length typical for Unix timestamps) for datetime_modified
+  if (/^\d{10,13}$/.test(str)) {
+    const date = new Date(Number(str));
+    return date.toISOString().replace('T', ' ').replace('Z', '').substring(0, 23);
+  }
+  // Check if the input is a simple date format ('5/26/2024') for date_uploaded
+  else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+    const [month, day, year] = str.split('/');
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+  // Handle original format
+  else {
+    const [datePart, timePart, subsecPart] = str.split(' ');
+    const formattedDate = datePart.replace(/:/g, '-');
+    return `${formattedDate} ${timePart}.${subsecPart}`;
+  }
 }
 
-async function addImageRecordsToDB(images, eventID) {
+// Function to add image records to the database
+async function addImageRecordsToDB(images, eventID, eventFolder) {
   for (const image of images) {
-      const query = `INSERT INTO zdk_dev.images (event_id, filename, filename_original, datetime_original_local, datetime_gpx_utc, datetime_adjusted_utc, camera, model, x_dim, y_dim, geom, altitude) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, ST_SetSRID(ST_MakePoint($11, $12), 4326), $13)`;
-      const values = [eventID, image.newFilename, image.originalname, convertTimestampToPostgresFormat(image.timestamp_str), image.timestamp_gpx_utc, image.timestamp_adjusted_utc, image.camera, image.model, image.x_dim, image.y_dim, image.gpsData.longitude, image.gpsData.latitude, image.altitude];
-      await pool.query(query, values);
+    // Define an object with column names as keys and values to be inserted
+    const imageData = {
+      event_id: eventID,
+      file_path: eventFolder,
+      file_name: image.newFilename,
+      is_favorite: false,
+      is_visible: true,
+      is_hidden_from_album: false,
+      datetime_original_local: convertTimestampToPostgresFormat(image.timestamp_str),
+      datetime_modified: convertTimestampToPostgresFormat(image.modifiedDate),
+      datetime_gpx_utc: image.timestamp_gpx_utc,
+      datetime_adjusted_utc: image.timestamp_adjusted_utc,
+      date_uploaded: convertTimestampToPostgresFormat(new Date().toLocaleDateString()),
+      camera_brand: image.camera,
+      camera_model: image.model,
+      x_dim: image.x_dim,
+      y_dim: image.y_dim,
+      altitude: image.altitude,
+      description: null,
+    };
+
+    // Add geom column using ST_SetSRID and ST_MakePoint for longitude and latitude
+    const geomIndex = Object.keys(imageData).length + 1; // Adjust index for geom (the next index after last item)
+    const values = Object.values(imageData).concat([image.gpsData.longitude, image.gpsData.latitude]);
+
+    // Construct the query dynamically excluding longitude and latitude but including geom
+    const query = `
+      INSERT INTO ${process.env.DB_SCHEMA}.images (${Object.keys(imageData).join(", ")}, geom)
+      VALUES (${Object.keys(imageData).map((_, index) => `$${index + 1}`).join(", ")}, ST_SetSRID(ST_MakePoint($${geomIndex}, $${geomIndex + 1}), 4326))
+    `;
+
+    // Execute the query with values
+    await pool.query(query, values);
   }
 }
 
@@ -49,13 +117,18 @@ async function saveImages(exifImages, eventID, eventFolder) {
       const newFilename = `${eventID}_${timestampFormat}.jpg`;
       const newPath = path.join(eventFolder, newFilename);
       await fs.promises.rename(image.path, newPath);
-      return { ...image, newFilename };
+      // Convert modifiedDate from milliseconds to seconds (which is required by utimes)
+      const modifiedDateInSeconds = Math.floor(image.modifiedDate / 1000);
+
+      // Set the access and modified times
+      await fs.promises.utimes(newPath, new Date(), modifiedDateInSeconds);      
+      return { ...image, newFilename, modifiedDate: image.modifiedDate };
   });
   return Promise.all(renamePromises);
 }
 
-function createEventFolder(eventID, eventTitle) {
-  const dir = `./assets/events/${eventID} ${eventTitle}`;
+function createEventFolder(eventID, eventTitleEn) {
+  const dir = `./assets/events/${eventID} ${eventTitleEn}`;
   if (!fs.existsSync(dir)){
       fs.mkdirSync(dir, { recursive: true });
   }
@@ -168,8 +241,10 @@ async function processExifData(images) {
 // Function to handle the event statistics upload to the database
 async function handleEventStatUpload(reqBody) {
   const {
-    eventTitle,
+    eventTitleRu,
+    eventTitleEn,
     eventID,
+    eventYoutube,
     eventType,
     eventDuration,
     eventStartDate,
@@ -188,41 +263,60 @@ async function handleEventStatUpload(reqBody) {
     eventMaxAltitude,
   } = reqBody;
 
+  // Combine date and time parts into a single string
   const startDateTime = `${eventStartDate} ${eventStartTime}`;
+  // If the end date is provided, combine it with the end time
   const endDateTime = eventEndDate ? `${eventEndDate} ${eventEndTime}` : null;
 
+  // Define an object with column names as keys and values to be inserted
+  const eventData = {
+    title_ru: eventTitleRu,
+    title_en: eventTitleEn,
+    id: eventID,
+    event_type: eventType,
+    duration_type: eventDuration,
+    start_date: startDateTime,
+    end_date: endDateTime,
+    distance: eventDistance,
+    commute_distance: eventCommute,
+    time_total: eventTimeTotal,
+    time_motion: eventTimeMotion,
+    avg_speed: eventAvgSpeed,
+    avg_motion_speed: eventAvgSpeedMotion,
+    downhill: eventDownhill,
+    uphill: eventUphill,
+    min_altitude: eventMinAltitude,
+    max_altitude: eventMaxAltitude,
+  };
+
+  // Extract column names and values, replacing empty strings with null
+  const columns = Object.keys(eventData);
+  const values = Object.values(eventData).map(value => (value === "" ? null : value));
+
+  // Construct the query dynamically
   const query = `
-    INSERT INTO events (
-      title, id, event_type, duration_type, start_date, end_date,
-      distance, commute_distance, time_total,
-      time_motion, avg_speed, avg_motion_speed, downhill, uphill,
-      min_altitude, max_altitude
-    )
-    VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
-    )
+    INSERT INTO ${process.env.DB_SCHEMA}.events (${columns.join(", ")})
+    VALUES (${columns.map((_, index) => `$${index + 1}`).join(", ")})
   `;
-
-  const values = [
-    eventTitle,
-    eventID,
-    eventType,
-    eventDuration,
-    startDateTime,
-    endDateTime,
-    eventDistance,
-    eventCommute,
-    eventTimeTotal,
-    eventTimeMotion,
-    eventAvgSpeed,
-    eventAvgSpeedMotion,
-    eventDownhill,
-    eventUphill,
-    eventMinAltitude,
-    eventMaxAltitude,
-  ].map((value) => (value === "" ? null : value));
-
   await pool.query(query, values);
+
+  // Define an object with column names as keys and values to be inserted
+  const youtubeData = {
+    event_id: eventID,
+    num: 1,  //TODO: Change this to a dynamic value
+    link: eventYoutube,
+  };
+
+  // Extract column names and values, replacing empty strings with null
+  const yt_columns = Object.keys(youtubeData);
+  const yt_values = Object.values(youtubeData).map(value => (value === "" ? null : value));
+
+  // Construct the query dynamically
+  const yt_query = `
+    INSERT INTO ${process.env.DB_SCHEMA}.youtube (${yt_columns.join(", ")})
+    VALUES (${yt_columns.map((_, index) => `$${index + 1}`).join(", ")})
+  `;
+  await pool.query(yt_query, yt_values);  
 }
 
 // Function to handle images upload
@@ -230,7 +324,7 @@ async function handleImagesUpload(images, eventID, eventFolder) {
   // Add EXIF data to the images
   const exifImages = await processExifData(images);
   const processedImages = await saveImages(exifImages, eventID, eventFolder);
-  await addImageRecordsToDB(processedImages, eventID);
+  await addImageRecordsToDB(processedImages, eventID, eventFolder);
 }
 
 // Function to handle GPX files upload
@@ -240,12 +334,17 @@ async function handleGPXUpload(files, eventID, eventTitle) {
 
 router.post("/api/upload-event",  upload.fields([{ name: 'images', maxCount: 999 }, { name: 'gpxFiles', maxCount: 999 }]), async (req, res) => {
   try {
-    const eventFolder = createEventFolder(req.body.eventID, req.body.eventTitle);
-    // Upload event data to the database
+    // Create a folder for the event
+    const eventFolder = createEventFolder(req.body.eventID, req.body.eventTitleEn);
+    // Upload event stat data to the database
     await handleEventStatUpload(req.body);
     // Upload images to the server and database
     if (req.files.images && req.files.images.length > 0) {
-      await handleImagesUpload(req.files.images, req.body.eventID, eventFolder);
+      const imagesWithModifiedDate = req.files.images.map((image, index) => ({
+        ...image,
+        modifiedDate: req.body[`imagesModifiedDate`][index]
+      }));
+      await handleImagesUpload(imagesWithModifiedDate, req.body.eventID, eventFolder);
     }    
     // Upload GPX files to the server and database
     // await handleGPXUpload(req.files, req.body.eventID, req.body.eventTitle);

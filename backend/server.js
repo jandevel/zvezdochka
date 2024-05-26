@@ -3,7 +3,12 @@
 
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
+// require("dotenv").config();
+
+// Import the environment loader function
+const loadEnvFile = require('./util/load-env');
+// Load the appropriate environment file
+loadEnvFile();
 
 // Register routes
 const eventRoutes = require('./routes/getEventList');

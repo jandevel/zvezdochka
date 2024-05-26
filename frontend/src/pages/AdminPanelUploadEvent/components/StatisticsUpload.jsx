@@ -6,8 +6,10 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const StatisticsUpload = () => {
   const [eventInput, setEventInput] = useState({
-    eventTitle: "",
+    eventTitleRu: "",
+    eventTitleEn: "",
     eventID: "",
+    eventYoutube: "",
     eventType: "0",
     eventDuration: "0",
     eventStartDate: "",
@@ -32,11 +34,16 @@ const StatisticsUpload = () => {
   });
   
   const handleFileChange = (type, files) => {
+    const filesWithModifiedDate = Array.from(files).map((file) => ({
+      file,
+      modifiedDate: file.lastModified,
+    }));
+
     setFileInput((prevFileInput) => ({
       ...prevFileInput,
-      [type]: files,
+      [type]: filesWithModifiedDate,
     }));
-  };  
+  }; 
 
   // Inside your component
   const handleSubmit = async (event) => {
@@ -51,8 +58,9 @@ const StatisticsUpload = () => {
     });
 
     Object.keys(fileInput).forEach((key) => {
-      Array.from(fileInput[key]).forEach((file) => {
+      fileInput[key].forEach(({ file, modifiedDate }) => {
         formData.append(key, file);
+        formData.append(`${key}ModifiedDate`, modifiedDate);
       });
     });
     // TODO: Append files to formData
@@ -202,14 +210,24 @@ const StatisticsUpload = () => {
     <>
       <p className="upload-event-title">Upload Event</p>
       <form className="upload-event-form" onSubmit={handleSubmit}>
-        <section id="event-title">
-          <label htmlFor="event-title__input">Title</label>
+        <section id="event-title-ru">
+          <label htmlFor="event-title-ru__input">Title (Russian)</label>
           <input
             type="text"
-            id="event-title__input"
+            id="event-title-ru__input"
             required
-            value={eventInput.eventTitle}
-            onChange={(event) => handleChange("eventTitle", event.target.value)}
+            value={eventInput.eventTitleRu}
+            onChange={(event) => handleChange("eventTitleRu", event.target.value)}
+          />
+        </section>
+        <section id="event-title-en">
+          <label htmlFor="event-title-en__input">Title (English)</label>
+          <input
+            type="text"
+            id="event-title-en__input"
+            required
+            value={eventInput.eventTitleEn}
+            onChange={(event) => handleChange("eventTitleEn", event.target.value)}
           />
         </section>
         <section id="event-id">
@@ -221,6 +239,15 @@ const StatisticsUpload = () => {
             value={eventInput.eventID}
             onChange={(event) => handleChange("eventID", event.target.value)}
           />
+        </section>
+        <section id="youtube-link">
+          <label htmlFor="youtube-link__input">YouTube Link</label>
+          <input
+            type="text"
+            id="youtube-link__input"
+            value={eventInput.eventYoutube}
+            onChange={(event) => handleChange("eventYoutube", event.target.value)}
+          />          
         </section>
         <section id="event-type">
           <label htmlFor="event-type__select">Event Type</label>
