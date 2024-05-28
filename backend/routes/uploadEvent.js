@@ -4,8 +4,10 @@ const path = require("path");
 
 const multer = require("multer");
 const EXIF = require('exif-js');
+const GPXParser = require('gpxparser');
 
 const pool = require("../util/db");
+const fsUtils = require('../util/fs-utils');
 
 const router = express.Router();
 // const MulterAzureStorage = require('multer-azure-blob-storage').MulterAzureStorage;
@@ -70,7 +72,7 @@ async function addImageRecordsToDB(images, eventID, eventFolder) {
     const imageData = {
       event_id: eventID,
       file_path: eventFolder,
-      file_name: image.newFilename,
+      file_name: image.filename,
       is_favorite: false,
       is_visible: true,
       is_hidden_from_album: false,
@@ -102,37 +104,148 @@ async function addImageRecordsToDB(images, eventID, eventFolder) {
   }
 }
 
-function convertTimestampToFilenameFormat(str) {
-  // Extract date and time parts
-  const [datePart, timePart, subsecPart] = str.split(' ');
-  // Remove colons from the date part and replace them with an underscore for the time part
-  const formattedDate = datePart.replace(/:/g, '');
-  const formattedTime = timePart.replace(/:/g, '');
-  return `${formattedDate}-${formattedTime}-${subsecPart}`;
+/**
+ * Converts array of track points to a PostGIS LINESTRING.
+ * @param {Array} points - The track points.
+ * @returns {String} The LINESTRING geometry as a string.
+ */
+const toLineString = (points) => {
+  return 'LINESTRING(' + points.map(p => `${p.lon} ${p.lat}`).join(', ') + ')';
+};
+
+/**
+ * Parses a GPX file and inserts its track as a LINESTRING into a PostgreSQL table.
+ * @param {String} filePath - Path to the GPX file.
+ * @param {Object} dbConfig - Database connection configuration.
+ */
+const getGpxTrackPostgisFormat = async (filePath) => {
+  try {
+    const gpxData = fs.readFileSync(filePath, 'utf8');
+    const gpx = new GPXParser();
+    gpx.parse(gpxData);
+
+    if (gpx.tracks.length === 0 || gpx.tracks[0].points.length === 0) {
+      throw new Error("No tracks found in the GPX file.");
+    }
+
+    const points = gpx.tracks[0].points;
+    const lineString = toLineString(points);
+
+    return lineString;
+  } catch (error) {
+    console.error('Failed to parse GPX file and insert data:', error);
+  }
+};
+
+// Function to add image records to the database
+async function addGpxRecordsToDB(files, eventID, eventFolder) {
+  for (const file of files) {
+    // Define an object with column names as keys and values to be inserted
+    const fileData = {
+      event_id: eventID,
+      file_path: eventFolder,
+      file_name: file.filename,
+      datetime_modified: convertTimestampToPostgresFormat(file.modifiedDate),
+      date_uploaded: convertTimestampToPostgresFormat(new Date().toLocaleDateString()),
+      gpx_data: await getGpxTrackPostgisFormat(file.path),
+    };
+
+    // Extract column names and values, replacing empty strings with null
+    const columns = Object.keys(fileData);
+    const values = Object.values(fileData).map(value => (value === "" ? null : value));
+
+    // Construct the query dynamically
+    const query = `
+      INSERT INTO ${process.env.DB_SCHEMA}.gpx_tracks (${columns.join(", ")})
+      VALUES (${columns.map((_, index) => `$${index + 1}`).join(", ")})
+    `;
+
+    // Execute the query with values
+    await pool.query(query, values);
+  }
 }
 
-async function saveImages(exifImages, eventID, eventFolder) {
+// function convertTimestampToFilenameFormat(str) {
+//   // Extract date and time parts
+//   const [datePart, timePart, subsecPart] = str.split(' ');
+//   // Remove colons from the date part and replace them with an underscore for the time part
+//   const formattedDate = datePart.replace(/:/g, '');
+//   const formattedTime = timePart.replace(/:/g, '');
+//   return `${formattedDate}-${formattedTime}-${subsecPart}`;
+// }
+
+async function saveImages(exifImages, eventFolder) {
   const renamePromises = exifImages.map(async (image, index) => {
-      const timestampFormat = convertTimestampToFilenameFormat(image.timestamp_str);
-      const newFilename = `${eventID}_${timestampFormat}.jpg`;
-      const newPath = path.join(eventFolder, newFilename);
+      // const timestampFormat = convertTimestampToFilenameFormat(image.timestamp_str);
+      // const newFilename = `${eventID}_${timestampFormat}.jpg`;
+      const newPath = path.join(eventFolder, 'images', image.filename);
       await fs.promises.rename(image.path, newPath);
       // Convert modifiedDate from milliseconds to seconds (which is required by utimes)
       const modifiedDateInSeconds = Math.floor(image.modifiedDate / 1000);
 
       // Set the access and modified times
       await fs.promises.utimes(newPath, new Date(), modifiedDateInSeconds);      
-      return { ...image, newFilename, modifiedDate: image.modifiedDate };
+      return { ...image, modifiedDate: image.modifiedDate };
   });
   return Promise.all(renamePromises);
 }
 
-function createEventFolder(eventID, eventTitleEn) {
-  const dir = `./assets/events/${eventID} ${eventTitleEn}`;
-  if (!fs.existsSync(dir)){
-      fs.mkdirSync(dir, { recursive: true });
+async function saveGpxFiles(files, eventFolder) {
+  const renamePromises = files.map(async (file, index) => {
+      const newPath = path.join(eventFolder, 'gpx', file.filename);
+      await fs.promises.copyFile(file.path, newPath);
+      // Convert modifiedDate from milliseconds to seconds (which is required by utimes)
+      const modifiedDateInSeconds = Math.floor(file.modifiedDate / 1000);
+
+      // Set the access and modified times
+      await fs.promises.utimes(newPath, new Date(), modifiedDateInSeconds);      
+      return { ...file, modifiedDate: file.modifiedDate };
+  });
+  return Promise.all(renamePromises);
+}
+
+// function createEventFolder(eventID, eventTitleEn) {
+//   // Root folder for event
+//   const dir = `./assets/events/${eventID} ${eventTitleEn}`;
+//   if (!fs.existsSync(dir)){
+//       fs.mkdirSync(dir, { recursive: true });
+//   }
+//   // Folder for images
+//   const image_dir = `./assets/events/${eventID} ${eventTitleEn}/images`;
+//   if (!fs.existsSync(image_dir)){
+//       fs.mkdirSync(image_dir, { recursive: true });
+//   }
+//   // Folder for gpx files
+//   const gpx_dir = `./assets/events/${eventID} ${eventTitleEn}/gpx`;
+//   if (!fs.existsSync(gpx_dir)){
+//       fs.mkdirSync(gpx_dir, { recursive: true });
+//   }
+//   // Folder for video files
+//   const video_dir = `./assets/events/${eventID} ${eventTitleEn}/video`;
+//   if (!fs.existsSync(video_dir)){
+//       fs.mkdirSync(video_dir, { recursive: true });
+//   }         
+//   return dir;
+// }
+
+async function createEventFolder(eventID, eventTitleEn) {
+  // Root folder for event
+  const rootDir = path.join('./assets/events', `${eventID} ${eventTitleEn}`);
+  // Subdirectories within the event folder
+  const subdirs = ['images', 'gpx', 'video'];
+  try {
+    // Ensure the root directory exists
+    await fs.promises.mkdir(rootDir, { recursive: true });
+    // Create each subdirectory
+    for (const subdir of subdirs) {
+      await fs.promises.mkdir(path.join(rootDir, subdir), { recursive: true });
+    }
+  } catch (error) {
+    console.error(`Failed to create directories: ${error.message}`);
+    throw error; // Rethrow to handle the error outside of this function if necessary
   }
-  return dir;
+
+  return rootDir; // Returning the root directory path
 }
 
 function getGPSData(exifData) {
@@ -323,34 +436,50 @@ async function handleEventStatUpload(reqBody) {
 async function handleImagesUpload(images, eventID, eventFolder) {
   // Add EXIF data to the images
   const exifImages = await processExifData(images);
-  const processedImages = await saveImages(exifImages, eventID, eventFolder);
+  const processedImages = await saveImages(exifImages, eventFolder);
   await addImageRecordsToDB(processedImages, eventID, eventFolder);
 }
 
 // Function to handle GPX files upload
-async function handleGPXUpload(files, eventID, eventTitle) {
-  const gpxFiles = files['gpxFiles'] || [];
+async function handleGPXUpload(files, eventID, eventFolder) {
+  // const gpxFiles = files['gpxFiles'] || [];
+  const gpxFiles = await saveGpxFiles(files, eventFolder);
+  await addGpxRecordsToDB(gpxFiles, eventID, eventFolder)
 }
 
 router.post("/api/upload-event",  upload.fields([{ name: 'images', maxCount: 999 }, { name: 'gpxFiles', maxCount: 999 }]), async (req, res) => {
   try {
     // Create a folder for the event
-    const eventFolder = createEventFolder(req.body.eventID, req.body.eventTitleEn);
+    const eventFolder = await createEventFolder(req.body.eventID, req.body.eventTitleEn);
     // Upload event stat data to the database
     await handleEventStatUpload(req.body);
     // Upload images to the server and database
     if (req.files.images && req.files.images.length > 0) {
+      // Ensure gpxFilesModifiedDate is always an array
+      const modifiedDates = Array.isArray(req.body.imagesModifiedDate)
+                            ? req.body.imagesModifiedDate
+                            : [req.body.imagesModifiedDate];       
       const imagesWithModifiedDate = req.files.images.map((image, index) => ({
         ...image,
-        modifiedDate: req.body[`imagesModifiedDate`][index]
+        modifiedDate: modifiedDates[index]
       }));
       await handleImagesUpload(imagesWithModifiedDate, req.body.eventID, eventFolder);
     }    
     // Upload GPX files to the server and database
-    // await handleGPXUpload(req.files, req.body.eventID, req.body.eventTitle);
-    // await clearTempFolder
-    res.status(200).send("Event uploaded successfully");
-    console.log("Event uploaded successfully");  // TODO: Remove this line when frontend notification is ready
+    if (req.files.gpxFiles && req.files.gpxFiles.length > 0) {
+      // Ensure gpxFilesModifiedDate is always an array
+      const modifiedDates = Array.isArray(req.body.gpxFilesModifiedDate)
+                            ? req.body.gpxFilesModifiedDate
+                            : [req.body.gpxFilesModifiedDate];      
+      const gpxFilesWithModifiedDate = req.files.gpxFiles.map((gpxFile, index) => ({
+        ...gpxFile,
+        modifiedDate: modifiedDates[index]
+      }));
+      await handleGPXUpload(gpxFilesWithModifiedDate, req.body.eventID, eventFolder);
+    }        
+    await fsUtils.clearFolder(process.env.UPLOAD_FOLDER);
+    res.status(200).send(`Event ${req.body.eventID} uploaded successfully`);
+    console.log(`Event ${req.body.eventID} uploaded successfully`);  // TODO: Remove this line when frontend notification is ready
   } catch (error) {
     console.error(error);
     res.status(500).send("Internal Server Error");

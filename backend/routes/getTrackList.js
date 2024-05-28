@@ -14,7 +14,7 @@ const pool = require("../util/db");
  */
 router.get("/api/tracks", async (req, res, next) => {
   try {
-    const query = "SELECT ST_AsGeoJSON(gpx_data) AS track FROM gpx_tracks;";
+    const query = `SELECT ST_AsGeoJSON(gpx_data) AS track FROM ${process.env.DB_SCHEMA}.gpx_tracks;`;
     const { rows } = await pool.query(query);
 
     res.json(rows.map((row) => JSON.parse(row.track)));
