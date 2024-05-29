@@ -8,6 +8,7 @@ const GPXParser = require('gpxparser');
 
 const pool = require("../util/db");
 const fsUtils = require('../util/fs-utils');
+const { get } = require("http");
 
 const router = express.Router();
 // const MulterAzureStorage = require('multer-azure-blob-storage').MulterAzureStorage;
@@ -129,9 +130,18 @@ const getGpxTrackPostgisFormat = async (filePath) => {
     }
 
     const points = gpx.tracks[0].points;
-    const lineString = toLineString(points);
-
-    return lineString;
+    const gpxParsedData = {
+      lineString: toLineString(points),
+      fileName: gpx.metadata.name,
+      totalDistance: Math.floor(gpx.tracks[0].distance.total),
+      elevationMax: gpx.tracks[0].elevation.max,
+      elevationMin: gpx.tracks[0].elevation.min,
+      elevationPos: Math.round(gpx.tracks[0].elevation.pos * 10) / 10,
+      elevationNeg: Math.round(gpx.tracks[0].elevation.neg * 10) / 10,
+      dateStart: gpx.tracks[0].points[0].time,
+      dateEnd: gpx.tracks[0].points[gpx.tracks[0].points.length - 1].time,
+    };
+    return gpxParsedData;
   } catch (error) {
     console.error('Failed to parse GPX file and insert data:', error);
   }
@@ -141,13 +151,22 @@ const getGpxTrackPostgisFormat = async (filePath) => {
 async function addGpxRecordsToDB(files, eventID, eventFolder) {
   for (const file of files) {
     // Define an object with column names as keys and values to be inserted
+    const gpxParsedData = await getGpxTrackPostgisFormat(file.path);
     const fileData = {
       event_id: eventID,
       file_path: eventFolder,
       file_name: file.filename,
       datetime_modified: convertTimestampToPostgresFormat(file.modifiedDate),
       date_uploaded: convertTimestampToPostgresFormat(new Date().toLocaleDateString()),
-      gpx_data: await getGpxTrackPostgisFormat(file.path),
+      file_name_original: gpxParsedData.fileName,
+      track_distance: gpxParsedData.totalDistance,
+      track_ele_max: gpxParsedData.elevationMax,
+      track_ele_min: gpxParsedData.elevationMin,
+      track_ele_pos: gpxParsedData.elevationPos,
+      track_ele_neg: gpxParsedData.elevationNeg,
+      track_date_start: gpxParsedData.dateStart,
+      track_date_end: gpxParsedData.dateEnd,
+      gpx_data: gpxParsedData.lineString,
     };
 
     // Extract column names and values, replacing empty strings with null
@@ -164,15 +183,6 @@ async function addGpxRecordsToDB(files, eventID, eventFolder) {
     await pool.query(query, values);
   }
 }
-
-// function convertTimestampToFilenameFormat(str) {
-//   // Extract date and time parts
-//   const [datePart, timePart, subsecPart] = str.split(' ');
-//   // Remove colons from the date part and replace them with an underscore for the time part
-//   const formattedDate = datePart.replace(/:/g, '');
-//   const formattedTime = timePart.replace(/:/g, '');
-//   return `${formattedDate}-${formattedTime}-${subsecPart}`;
-// }
 
 async function saveImages(exifImages, eventFolder) {
   const renamePromises = exifImages.map(async (image, index) => {
