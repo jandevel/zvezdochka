@@ -90,16 +90,23 @@ async function addImageRecordsToDB(images, eventID, eventFolder) {
       description: null,
     };
 
-    // Add geom column using ST_SetSRID and ST_MakePoint for longitude and latitude
-    const geomIndex = Object.keys(imageData).length + 1; // Adjust index for geom (the next index after last item)
-    const values = Object.values(imageData).concat([image.gpsData.longitude, image.gpsData.latitude]);
+    let values = Object.values(imageData);    
+    let query;
 
-    // Construct the query dynamically excluding longitude and latitude but including geom
-    const query = `
-      INSERT INTO ${process.env.DB_SCHEMA}.images (${Object.keys(imageData).join(", ")}, geom)
-      VALUES (${Object.keys(imageData).map((_, index) => `$${index + 1}`).join(", ")}, ST_SetSRID(ST_MakePoint($${geomIndex}, $${geomIndex + 1}), 4326))
-    `;
-
+    if (image.gpsData != null) {
+      // If gpsData is not null, include geom column using ST_SetSRID and ST_MakePoint for longitude and latitude
+      values = values.concat([image.gpsData.longitude, image.gpsData.latitude]);
+      query = `
+        INSERT INTO ${process.env.DB_SCHEMA}.images (${Object.keys(imageData).join(", ")}, geom)
+        VALUES (${Object.keys(imageData).map((_, index) => `$${index + 1}`).join(", ")}, ST_SetSRID(ST_MakePoint($${values.length - 1}, $${values.length}), 4326))
+      `;
+    } else {
+      // Exclude geom data if gpsData is null
+      query = `
+        INSERT INTO ${process.env.DB_SCHEMA}.images (${Object.keys(imageData).join(", ")})
+        VALUES (${Object.keys(imageData).map((_, index) => `$${index + 1}`).join(", ")})
+      `;
+    }
     // Execute the query with values
     await pool.query(query, values);
   }
@@ -341,24 +348,25 @@ async function readExifData(imagePath) {
 
 async function processExifData(images) {
   // Get EXIF data for each image
-  // const exifPromises = images.map(image => readExifData(image.path));
-  // const exifData = await Promise.all(exifPromises);
   const exifData = await Promise.all(images.map(image => readExifData(image.path)));
-  return images.map((image, index) => ({
+  return images.map((image, index) => {
+      const exif = exifData[index];
+      return {
       ...image,
-      camera: exifData[index].Make || null,
-      model: exifData[index].Model || null,
-      x_dim: exifData[index].PixelXDimension || null,
-      y_dim: exifData[index].PixelYDimension || null,
-      gps_version: exifData[index].GPSVersionID || null,
-      timestamp_str: exifData[index].DateTimeOriginal 
-        ? `${exifData[index].DateTimeOriginal} ${exifData[index].SubsecTimeOriginal ? exifData[index].SubsecTimeOriginal : '000'}` 
+      camera: exif.Make || null,
+      model: exif.Model || null,
+      x_dim: exif.PixelXDimension || null,
+      y_dim: exif.PixelYDimension || null,
+      gps_version: exif.GPSVersionID || null,
+      timestamp_str: exif.DateTimeOriginal 
+        ? `${exif.DateTimeOriginal} ${exif.SubsecTimeOriginal ? exif.SubsecTimeOriginal : '000'}` 
         : null,      
-      timestamp_gpx_utc: convertExifGpsTimestampToPostgresFormat(exifData[index]),
-      timestamp_adjusted_utc: adjustDateTimeToUTC(exifData[index]),
-      gpsData: (exifData[index].GPSLatitude && exifData[index].GPSLongitude) ? getGPSData(exifData[index]) : null,
-      altitude: exifData[index].GPSAltitude ? exifData[index].GPSAltitude.numerator / exifData[index].GPSAltitude.denominator : null
-  }));
+      timestamp_gpx_utc: exif.GPSDateStamp ? convertExifGpsTimestampToPostgresFormat(exif) : null,
+      timestamp_adjusted_utc: exif.GPSTimeStamp ? adjustDateTimeToUTC(exif) : null,
+      gpsData: (exif.GPSLatitude && exif.GPSLongitude) ? getGPSData(exif) : null,
+      altitude: exif.GPSAltitude ? exif.GPSAltitude.numerator / exif.GPSAltitude.denominator : null
+      };
+  });
 }
 
 // Function to handle the event statistics upload to the database
@@ -423,23 +431,26 @@ async function handleEventStatUpload(reqBody) {
   `;
   await pool.query(query, values);
 
-  // Define an object with column names as keys and values to be inserted
-  const youtubeData = {
-    event_id: eventID,
-    num: 1,  //TODO: Change this to a dynamic value
-    link: eventYoutube,
-  };
+  // Only proceed with this part if eventYoutube is not null
+  if (eventYoutube !== "") {
+    // Define an object with column names as keys and values to be inserted
+    const youtubeData = {
+      event_id: eventID,
+      num: 1,  //TODO: Change this to a dynamic value
+      link: eventYoutube,
+    };
 
-  // Extract column names and values, replacing empty strings with null
-  const yt_columns = Object.keys(youtubeData);
-  const yt_values = Object.values(youtubeData).map(value => (value === "" ? null : value));
+    // Extract column names and values, replacing empty strings with null
+    const yt_columns = Object.keys(youtubeData);
+    const yt_values = Object.values(youtubeData).map(value => (value === "" ? null : value));
 
-  // Construct the query dynamically
-  const yt_query = `
-    INSERT INTO ${process.env.DB_SCHEMA}.youtube (${yt_columns.join(", ")})
-    VALUES (${yt_columns.map((_, index) => `$${index + 1}`).join(", ")})
-  `;
-  await pool.query(yt_query, yt_values);  
+    // Construct the query dynamically
+    const yt_query = `
+      INSERT INTO ${process.env.DB_SCHEMA}.youtube (${yt_columns.join(", ")})
+      VALUES (${yt_columns.map((_, index) => `$${index + 1}`).join(", ")})
+    `;
+    await pool.query(yt_query, yt_values);
+  }  
 }
 
 // Function to handle images upload
