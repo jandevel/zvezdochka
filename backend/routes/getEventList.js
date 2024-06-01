@@ -14,11 +14,17 @@ const pool = require("../util/db");
  */
 router.get("/api/events", async (req, res, next) => {
   try {
-    const eventsQuery = "SELECT * FROM events";
-    const { rows } = await pool.query(eventsQuery);
+    const query = `
+      SELECT e.*, i.file_name as image
+      FROM ${process.env.DB_SCHEMA}.events e
+      LEFT JOIN ${process.env.DB_SCHEMA}.images i ON e.album_cover_pic_id = i.id
+      ORDER BY e.start_date DESC
+    `;
+    const { rows } = await pool.query(query);
     res.json(rows);
-  } catch (error) {
-    res.status(500).send(error);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
   }
 });
 

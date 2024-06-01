@@ -1,11 +1,11 @@
 import EventCard from "./EventCard.jsx";
-import { EVENT_CARDS } from '../data.js';
+// import { EVENT_CARDS } from '../data.js';
 
-export default function EventList() {
+export default function EventList({ events }) {
   return (
     <section id="event-cards">
       <ul>
-        {EVENT_CARDS.map((eventItem) => (
+        {events.map((eventItem) => (
           <EventCard key={eventItem.id} {...eventItem} />
         ))}
       </ul>
