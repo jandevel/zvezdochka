@@ -28,3 +28,6 @@ yarn-error.log*
 
 # dummy data
 /src/pages/Events/data.js
+
+# images for local dev
+/public/assets
