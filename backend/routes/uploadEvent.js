@@ -5,6 +5,7 @@ const path = require("path");
 const multer = require("multer");
 const EXIF = require('exif-js');
 const GPXParser = require('gpxparser');
+const sharp = require('sharp');
 
 const pool = require("../util/db");
 const fsUtils = require('../util/fs-utils');
@@ -191,20 +192,44 @@ async function addGpxRecordsToDB(files, eventID, eventFolder) {
   }
 }
 
+async function saveThumbnail(imageBuffer, thumbnailsPath, filename) {
+  const outputExtension = '.webp';
+  const baseFilename = path.basename(filename, path.extname(filename)) + outputExtension;
+  const thumbnailPath = path.join(thumbnailsPath, `thumb_${baseFilename}`);
+
+  // Generate and save the thumbnail from the buffer
+  await sharp(imageBuffer)
+    .resize({ width: 200, height: 150, fit: 'contain' })
+    .toFormat('webp')
+    .toFile(thumbnailPath);
+
+  return thumbnailPath;
+}
+
 async function saveImages(exifImages, eventFolder) {
-  const renamePromises = exifImages.map(async (image, index) => {
-      // const timestampFormat = convertTimestampToFilenameFormat(image.timestamp_str);
-      // const newFilename = `${eventID}_${timestampFormat}.jpg`;
-      const newPath = path.join(eventFolder, 'images', image.filename);
-      await fs.promises.rename(image.path, newPath);
+  // Construct the path for the image
+  const imagesPath = path.join(eventFolder, 'images');
+  const thumbnailsPath = path.join(eventFolder, 'thumbnails');
+
+  const processPromises = exifImages.map(async (image) => {
+      // Read image file into buffer
+      const imageBuffer = await fs.promises.readFile(image.path);    
+      // Construct the path for the image
+      const newPath = path.join(imagesPath, image.filename);
+
+      // Save original image from buffer
+      await fs.promises.writeFile(newPath, imageBuffer);
+
       // Convert modifiedDate from milliseconds to seconds (which is required by utimes)
       const modifiedDateInSeconds = Math.floor(image.modifiedDate / 1000);
-
       // Set the access and modified times
-      await fs.promises.utimes(newPath, new Date(), modifiedDateInSeconds);      
+      await fs.promises.utimes(newPath, new Date(), modifiedDateInSeconds);       
+
+      // Generate and save thumbnail
+      const thumbnailPath = await saveThumbnail(imageBuffer, thumbnailsPath, image.filename);
       return { ...image, modifiedDate: image.modifiedDate };
   });
-  return Promise.all(renamePromises);
+  return Promise.all(processPromises);
 }
 
 async function saveGpxFiles(files, eventFolder) {
@@ -221,35 +246,11 @@ async function saveGpxFiles(files, eventFolder) {
   return Promise.all(renamePromises);
 }
 
-// function createEventFolder(eventID, eventTitleEn) {
-//   // Root folder for event
-//   const dir = `./assets/events/${eventID} ${eventTitleEn}`;
-//   if (!fs.existsSync(dir)){
-//       fs.mkdirSync(dir, { recursive: true });
-//   }
-//   // Folder for images
-//   const image_dir = `./assets/events/${eventID} ${eventTitleEn}/images`;
-//   if (!fs.existsSync(image_dir)){
-//       fs.mkdirSync(image_dir, { recursive: true });
-//   }
-//   // Folder for gpx files
-//   const gpx_dir = `./assets/events/${eventID} ${eventTitleEn}/gpx`;
-//   if (!fs.existsSync(gpx_dir)){
-//       fs.mkdirSync(gpx_dir, { recursive: true });
-//   }
-//   // Folder for video files
-//   const video_dir = `./assets/events/${eventID} ${eventTitleEn}/video`;
-//   if (!fs.existsSync(video_dir)){
-//       fs.mkdirSync(video_dir, { recursive: true });
-//   }         
-//   return dir;
-// }
-
 async function createEventFolder(eventID, eventTitleEn) {
   // Root folder for event
   const rootDir = path.join('./assets/events', `${eventID} ${eventTitleEn}`);
   // Subdirectories within the event folder
-  const subdirs = ['images', 'gpx', 'video'];
+  const subdirs = ['images', 'thumbnails', 'gpx', 'video'];
   try {
     // Ensure the root directory exists
     await fs.promises.mkdir(rootDir, { recursive: true });
