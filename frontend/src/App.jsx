@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Layout from "./components/layout/Layout";
 import EventsPage from "./pages/Events/EventsPage";
+import EventDetailPage from "./pages/Event/EventDetailPage";
 import RoutesPage from "./pages/Routes/RoutesPage";
 import PhotoMapPage from "./pages/PhotoMap/PhotoMapPage";
 import GalleryPage from "./pages/Gallery/GalleryPage";
@@ -25,6 +26,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Layout><EventsPage /></Layout>} />
+        <Route path="/event/:eventId" element={<Layout><EventDetailPage /></Layout>} />
         <Route path="/routes" element={<Layout><RoutesPage /></Layout>} />
         <Route path="/photo-map" element={<Layout><PhotoMapPage /></Layout>} />
         <Route path="/gallery" element={<Layout><GalleryPage /></Layout>} />

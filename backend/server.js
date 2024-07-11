@@ -12,6 +12,7 @@ loadEnvFile();
 
 // Register routes
 const eventRoutes = require('./routes/getEventList');
+const eventDetailRoutes = require('./routes/getEvent');
 const trackRoutes = require('./routes/getTrackList');
 const uploadEventRoutes = require('./routes/uploadEvent');
 
@@ -93,6 +94,7 @@ app.use(cors());
 
 
 app.use(eventRoutes);
+app.use(eventDetailRoutes);
 app.use(trackRoutes);
 app.use(uploadEventRoutes);
 

@@ -1,3 +1,5 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
 import "./EventCard.css";
 
 export default function EventCard({
@@ -37,31 +39,35 @@ export default function EventCard({
   };  
 
   return (
-    <li className="card-details">
-      <div className="card-image">
-        <img src={imagePath} alt="Event album cover" />
-      </div>
-      <div className="card-date">Date: {formatDate(start_date)}</div>
-      <div className="card-distance">Distance: {distance}</div>
-      <div className="card-title">{title_en}</div>
-      <div className="card-tags">
-        <span className="card-tags__event-type">{eventTypeMap[event_type]}</span> 
-        <span className="card-tags__duration">{durationTypeMap[duration_type]}</span>
-        <span className="card-tags__event-id">{id}</span>
-      </div>
-      <ul className="card-stat1">
-        <li>Start Time: {formatTime(start_date)}</li>
-        <li>End Time: {formatTime(end_date)}</li>
-        <li>Time Total: {time_total}</li>
-        <li>Time Motion: {time_motion}</li>
-      </ul>
-      <ul className="card-stat2">
-        <li>Avg Speed (stops included): {avg_speed}</li>
-        <li>Avg Motion Speed: {avg_motion_speed}</li>
-        <li>Uphill: {uphill}</li>
-        <li>Downhill: {downhill}</li>
-        <li>Altitude Range: {min_altitude} - {max_altitude}</li>
-      </ul>    
-    </li>
+    <div class="card-details-wrapper">
+      <Link to={`/event/${id}`} style={{ textDecoration: 'none', color: 'inherit' }}>    
+        <li className="card-details">
+            <div className="card-image">
+              <img src={imagePath} alt="Event album cover" />
+            </div>
+            <div className="card-date">Date: {formatDate(start_date)}</div>
+            <div className="card-distance">Distance: {distance}</div>
+            <div className="card-title">{title_en}</div>
+            <div className="card-tags">
+              <span className="card-tags__event-type">{eventTypeMap[event_type]}</span> 
+              <span className="card-tags__duration">{durationTypeMap[duration_type]}</span>
+              <span className="card-tags__event-id">{id}</span>
+            </div>
+            <ul className="card-stat1">
+              <li>Start Time: {formatTime(start_date)}</li>
+              <li>End Time: {formatTime(end_date)}</li>
+              <li>Time Total: {time_total}</li>
+              <li>Time Motion: {time_motion}</li>
+            </ul>
+            <ul className="card-stat2">
+              <li>Avg Speed (stops included): {avg_speed}</li>
+              <li>Avg Motion Speed: {avg_motion_speed}</li>
+              <li>Uphill: {uphill}</li>
+              <li>Downhill: {downhill}</li>
+              <li>Altitude Range: {min_altitude} - {max_altitude}</li>
+            </ul>    
+        </li>
+      </Link>  
+    </div>
   );
 }

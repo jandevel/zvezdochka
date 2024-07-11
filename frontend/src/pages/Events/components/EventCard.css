@@ -1,19 +1,24 @@
+.card-details-wrapper {
+    width: 800px; /* Same as the card width */
+    margin: 0 auto; /* Centers the container horizontally */
+}
+
 .card-details {
     background: white;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     border: 2px solid #ddd;
     border-radius: 1rem;
-    width: 800px;
+    width: 100%; /* Makes card width relative to the container */
     height: var(--event-card-height);
-    margin: 2rem auto 0;
+    margin: 2rem 0 0 0; /* Only bottom margin to space between cards */
     padding: 0.4rem;
     display: grid;
     grid-template-columns: var(--event-card-image-column-width) 0.8fr auto;
-    /* grid-template-rows: 1fr 1fr 1fr 1fr; */
-    grid-template-areas: "image date distance"
-                         "image title title"
-                         "image tags event_id"
-                         "image stat1 stat2";
+    grid-template-areas: 
+        "image date distance"
+        "image title title"
+        "image tags event_id"
+        "image stat1 stat2";
     gap: 0.5rem;
   }
 
@@ -102,49 +107,3 @@
     font-size: 0.9rem;
     /* font-weight: bold; */
 }  
-
-/* .card {
-    border: 2px solid #000;
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 20px;
-    display: grid;
-    grid-template-columns: 1fr 3fr;
-    gap: 20px;
-    align-items: center;
-  }
-
-.card-image {
-    border: 1px solid #000;
-    width: 100%;
-    height: 150px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-}
-
-  .card-details {
-    display: grid;
-    grid-template-rows: auto;
-    gap: 10px;
-  }
-
-  .card-details div {
-    display: flex;
-    justify-content: space-between;
-  }
-
-  .card-header {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 15px;
-  }
-
-  .card-footer {
-    font-size: 14px;
-    text-align: right;
-    padding-top: 10px;
-    border-top: 1px solid #000;
-  } */
