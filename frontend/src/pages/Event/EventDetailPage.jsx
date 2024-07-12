@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import ImageGallery from 'react-image-gallery';
 import 'react-image-gallery/styles/css/image-gallery.css';
+import './ImageGalleryCustomStyles.css'; // Ensure this comes after the default styles
 
 const EventDetailPage = () => {
   const [eventDetails, setEventDetails] = useState(null);
@@ -45,7 +46,10 @@ const EventDetailPage = () => {
         <div>
           <h1>{eventDetails.event.title_en}</h1>
           {eventDetails.images.length > 0 && (
-            <ImageGallery items={images} />
+            <ImageGallery
+            items={images}
+            slideDuration={0} // Set the transition duration to 200ms
+          />
           )}
         </div>
       ) : (
