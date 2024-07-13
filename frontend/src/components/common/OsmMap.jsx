@@ -1,7 +1,9 @@
 import React from 'react';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
+import { FullscreenControl } from 'react-leaflet-fullscreen';
 
 import 'leaflet/dist/leaflet.css';
+import "react-leaflet-fullscreen/styles.css";
 import "./OsmMap.css";
 
 const OsmMap = ({ center, zoom, tracks }) => {
@@ -14,6 +16,7 @@ const OsmMap = ({ center, zoom, tracks }) => {
       {tracks.map((track, idx) => (
         <GeoJSON key={idx} data={track} />
       ))}
+      <FullscreenControl position="topleft" />
     </MapContainer>
   );
 };
