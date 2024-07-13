@@ -36,10 +36,19 @@ router.get("/api/events/:eventId", async (req, res, next) => {
       `;
       const imagesData = await pool.query(imagesQuery, [eventId]);
 
-      // Combining event data with images
+      // Query to retrieve GPX data
+      const gpxQuery = `
+        SELECT ST_AsGeoJSON(gpx_data) AS track
+        FROM ${process.env.DB_SCHEMA}.gpx_tracks
+        WHERE event_id = $1
+      `;
+      const gpxData = await pool.query(gpxQuery, [eventId]);
+
+      // Combining event data with images and GPX data
       const response = {
         event: event,
-        images: imagesData.rows
+        images: imagesData.rows,
+        gpx: gpxData.rows.length > 0 ? gpxData.rows[0].track : null
       };
 
       res.json(response);

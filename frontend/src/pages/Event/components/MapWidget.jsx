@@ -12,10 +12,11 @@ const GPXTracksMap = () => {
 
   useEffect(() => {
     // Fetch the tracks from the API
+    console.log("Fetching tracks from the API...");
     fetch(`${API_BASE_URL}/api/tracks`)
       .then((response) => response.json())
       .then((data) => {
-        console.log("Fetched data:", data); // Log the data so it can be inspected in the browser
+        console.log("Tracks fetched:", data);
         setTracks(data);
       })
       .catch((err) => {

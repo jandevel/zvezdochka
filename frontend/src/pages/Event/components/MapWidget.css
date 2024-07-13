@@ -1,0 +1,13 @@
+/* .map {
+  height: 100vh;
+  width: 100%;
+} */
+
+.event-custom-map-container {
+  height: 50vh;
+  width: 40%;
+  padding-top: 2rem;
+  /* padding-bottom: 0.5rem; */
+  margin: auto;
+  /* padding: 200px; */
+}
