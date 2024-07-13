@@ -1,0 +1,9 @@
+.image-gallery {
+    width: 50%;
+    margin: 0 auto; /* Centers the gallery horizontally */
+  }
+  
+  .image-gallery.fullscreen-modal {
+    width: 100%;
+    margin: 0; /* Ensures fullscreen mode uses the full width */
+  }
