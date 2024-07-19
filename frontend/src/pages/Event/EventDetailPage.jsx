@@ -7,6 +7,39 @@ import OsmMap from "../../components/common/OsmMap";
 import "./components/MapWidget.css";
 import 'react-image-gallery/styles/css/image-gallery.css';
 import './ImageGalleryCustomStyles.css'; // Ensure this comes after the default styles
+import "./EventDetailPage.css";
+
+const eventTypeMap = {0: 'Cycling', 1: 'Travel', 2: 'Year'};
+const durationTypeMap = {0: 'One-Day', 1: 'Multi-Day', 2: 'Long-Haul'};
+
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Radius of the Earth in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c;
+  return distance;
+};
+
+const getZoomLevel = (distance) => {
+  if (distance > 2000) return 4;
+  if (distance > 1000) return 5;
+  if (distance > 500) return 6;
+  if (distance > 250) return 7;
+  if (distance > 150) return 8;
+  if (distance > 70) return 9;
+  if (distance > 30) return 10;
+  if (distance > 15) return 11;
+  if (distance > 8) return 12;
+  if (distance > 4) return 13;
+  if (distance > 2) return 14;
+  if (distance > 1) return 15;
+  return 16;
+};
 
 const EventDetailPage = () => {
   const [eventDetails, setEventDetails] = useState(null);
@@ -33,31 +66,122 @@ const EventDetailPage = () => {
       description: img.datetime_original_local
     };
   });
-  console.log(images);
 
   // This part is for extracting GPX data for the map component
   const tracks = eventDetails?.gpx ? (Array.isArray(JSON.parse(eventDetails.gpx)) ? JSON.parse(eventDetails.gpx) : [JSON.parse(eventDetails.gpx)]) : [];
-  // const tracks = eventDetails?.gpx ? JSON.parse(eventDetails.gpx) : null;
-  console.log("Data from API:", tracks); 
-  const mapCenter = [43.653, -79.38];
-  // const mapCenter = tracks ? { lat: tracks.coordinates[0][1], lng: tracks.coordinates[0][0] } : { lat: 0, lng: 0 }; // Adjust as needed based on GPX data structure
-  const mapZoom = 12; // Default zoom level, adjust as necessary  
+  let minLat = Infinity, minLng = Infinity, maxLat = -Infinity, maxLng = -Infinity;
 
+  tracks.forEach(track => {
+    track.coordinates.forEach(([lat, lng]) => {
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+      if (lng < minLng) minLng = lng;
+      if (lng > maxLng) maxLng = lng;
+    });
+  });
+
+  const centerLat = (minLat + maxLat) / 2;
+  const centerLng = (minLng + maxLng) / 2;
+  const mapCenter = [centerLng, centerLat]; 
+
+  const distance = calculateDistance(minLat, minLng, maxLat, maxLng);
+  const mapZoom = getZoomLevel(distance);
+  console.log("Distance:", distance);
+  console.log("Zoom:", mapZoom);  
+
+  // Function to format date and time
+  const formatDate = (datetime) => {
+    const date = new Date(datetime);
+    return date.toLocaleDateString(); // adjust the locale and options as necessary
+  };
+
+  const formatTime = (datetime) => {
+    const time = new Date(datetime);
+    return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // 24-hour format without seconds
+  };    
+  console.log("Data from API:", mapCenter);
   return (
     <div>
       {eventDetails ? (
         <div>
-          <h1>{eventDetails.event.title_en}</h1>
-          <div className="event-custom-map-container">
-            <OsmMap center={mapCenter} zoom={mapZoom} tracks={tracks} />
-          </div>
-          <h1>Фотографии</h1>
+          <p className="event-detail-title">{eventDetails.event.title_ru}</p>        
+          <div className="event-detail-data-wrapper">
+            <div class="event-detail-head-stat">          
+              <div className="event-detail-head-stat__left">
+                <div>Дата: {formatDate(eventDetails.event.start_date)}</div>
+                <div>Дистанция: {eventDetails.event.distance} км</div> 
+                <div>Видео: <a href="https://youtube.com/link1" target="_blank" rel="noopener noreferrer">Первый день в Мексике</a></div>                 
+              </div>            
+              <div className="event-detail-head-stat__right">
+                  <span className="event-tags__event-type">{eventTypeMap[eventDetails.event.event_type]}</span> 
+                  <span className="event-tags__duration">{durationTypeMap[eventDetails.event.duration_type]}</span>
+                  <span className="event-tags__event-id">{eventDetails.event.id}</span>
+              </div>             
+            </div>              
+          </div>          
+          <p className="event-detail-section-header">Фотографии</p>            
           {eventDetails.images.length > 0 && (
             <ImageGallery
             items={images}
             slideDuration={0} // Set the transition duration to 200ms
           />
-          )}
+          )}          
+          <p className="event-detail-section-header">Карта маршрута</p>            
+          <div className="event-custom-map-container">
+            <OsmMap center={mapCenter} zoom={mapZoom} tracks={tracks} />
+          </div>
+          <p className="event-detail-section-header">Статистика</p>
+          <div className="event-detail-data-wrapper">
+            <table className="event-summary-table">
+              <tbody>
+                <tr>
+                  <td>Дата:</td>
+                  <td>{formatDate(eventDetails.event.start_date)}</td>
+                </tr>
+                <tr>
+                  <td>Дистанция:</td>
+                  <td>{eventDetails.event.distance} км</td>
+                </tr>
+                <tr>
+                  <td>Время старта:</td>
+                  <td>{formatTime(eventDetails.event.start_date)}</td>
+                </tr>
+                <tr>
+                  <td>Время финиша:</td>
+                  <td>{formatTime(eventDetails.event.end_date)}</td>
+                </tr>
+                <tr>
+                  <td>Общее время:</td>
+                  <td>{eventDetails.event.time_total}</td>
+                </tr>
+                <tr>
+                  <td>Время в движении:</td>
+                  <td>{eventDetails.event.time_motion}</td>
+                </tr>
+                <tr>
+                  <td>Средняя скорость:</td>
+                  <td>{eventDetails.event.avg_speed}</td>
+                </tr>
+                <tr>
+                  <td>Средняя скорость в движении:</td>
+                  <td>{eventDetails.event.avg_motion_speed}</td>
+                </tr>
+                <tr>
+                  <td>Набор высоты:</td>
+                  <td>{eventDetails.event.uphill} м</td>
+                </tr>
+                <tr>
+                  <td>Сброс высоты:</td>
+                  <td>{eventDetails.event.downhill} м</td>
+                </tr>
+                <tr>
+                  <td>Перепад высот:</td>
+                  <td>{eventDetails.event.min_altitude} - {eventDetails.event.max_altitude} м</td>
+                </tr>
+              </tbody>
+            </table> 
+          </div>
+          <div className="event-summary-footer"></div>                   
         </div>
       ) : (
         <p>Loading event details...</p>

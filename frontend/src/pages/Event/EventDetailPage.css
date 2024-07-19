@@ -1,0 +1,110 @@
+.event-detail-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  padding-top: 2rem;
+}
+
+.event-detail-data-wrapper {
+  width: 50%;
+  margin: 0 auto;
+}
+
+.event-detail-head-stat {
+  display: grid;
+  grid-template-columns: auto auto; /* Defines two columns */
+  justify-content: space-between; /* Aligns columns to the edges */
+}
+
+.event-detail-head-stat__left {
+  justify-self: start; /* Aligns these items to the left of their cell */
+}
+
+.event-detail-head-stat__right {
+  font-size: 0.9rem;
+  justify-self: end; /* Aligns this item to the right of its cell */
+}  
+
+.event-tags {
+  font-size: 0.9rem;
+  /* font-weight: bold; */
+}
+
+.event-tags__event-type {
+  background-color: rgb(167, 74, 74, 0.5);
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.8rem;
+  margin-right: 0.5rem;
+}
+
+.event-tags__duration {
+  background-color: rgb(159, 57, 173, 0.5);
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.8rem;
+  margin-right: 0.5rem;
+  white-space: nowrap;
+} 
+
+.event-tags__event-id {
+  background-color: rgba(199, 192, 192, 0.5);
+  padding: 0.2rem 0.9rem;
+  border-radius: 0.8rem;
+  margin-right: 0.5rem;
+}
+
+.event-detail-section-header {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin-bottom: 1rem  
+  }
+
+.event-summary-table {
+  border-collapse: separate; /* Use separate to allow border spacing and radius */
+  border-spacing: 0; /* Optional: removes space between cells */  
+  border-radius: 10px;
+  border: 1px solid rgb(182, 175, 175);  
+  width: 50%;
+  margin: 0 auto;
+  /* padding-bottom: 1rem */
+}
+
+.event-summary-table td, .event-summary-table th {
+  /* border: 1px solid rgb(182, 175, 175); */
+  padding: 8px;
+}
+
+/* Apply a border to the right of all but the last column */
+.event-summary-table th:not(:last-child),
+.event-summary-table td:not(:last-child) {
+ border-right: 1px solid rgb(182, 175, 175); 
+}
+
+/* Apply a border to the bottom of all but the last row */
+.event-summary-table>thead>tr:not(:last-child)>th,
+.event-summary-table>thead>tr:not(:last-child)>td,
+.event-summary-table>tbody>tr:not(:last-child)>th,
+.event-summary-table>tbody>tr:not(:last-child)>td,
+.event-summary-table>tfoot>tr:not(:last-child)>th,
+.event-summary-table>tfoot>tr:not(:last-child)>td,
+.event-summary-table>tr:not(:last-child)>td,
+.event-summary-table>tr:not(:last-child)>th,
+.event-summary-table>thead:not(:last-child),
+.event-summary-table>tbody:not(:last-child),
+.event-summary-table>tfoot:not(:last-child) {
+ border-bottom: 1px solid rgb(182, 175, 175);
+}
+
+.event-summary-table td:nth-child(1) { 
+  width: 30%; 
+}
+.event-summary-table td:nth-child(2) { 
+  width: 20%; 
+}
+
+.event-summary-footer {
+  width: 50%;
+  margin-bottom: 3rem
+}
