@@ -103,7 +103,9 @@ const EventDetailPage = () => {
             <div class="event-detail-head-stat">          
               <div className="event-detail-head-stat__left">
                 <div>Дата: {formatDate(eventDetails.event.start_date)}</div>
-                <div>Дистанция: {eventDetails.event.distance} км</div> 
+                {eventDetails.event.distance !== null && (
+                  <div>Дистанция: {eventDetails.event.distance} км</div>
+                )}
                 <div>Видео: <a href="https://youtube.com/link1" target="_blank" rel="noopener noreferrer">Первый день в Мексике</a></div>                 
               </div>            
               <div className="event-detail-head-stat__right">
@@ -112,18 +114,24 @@ const EventDetailPage = () => {
                   <span className="event-tags__event-id">{eventDetails.event.id}</span>
               </div>             
             </div>              
-          </div>          
-          <p className="event-detail-section-header">Фотографии</p>            
+          </div>                    
           {eventDetails.images.length > 0 && (
-            <ImageGallery
-            items={images}
-            slideDuration={0} // Set the transition duration to 200ms
-          />
+            <>
+              <p className="event-detail-section-header">Фотографии</p>             
+              <ImageGallery
+              items={images}
+              slideDuration={0} // Set the transition duration to 200ms
+              />
+            </>            
           )}          
-          <p className="event-detail-section-header">Карта маршрута</p>            
-          <div className="event-custom-map-container">
-            <OsmMap center={mapCenter} zoom={mapZoom} tracks={tracks} />
-          </div>
+          {tracks && tracks.length > 0 && (
+            <>
+              <p className="event-detail-section-header">Карта маршрута</p>
+              <div className="event-custom-map-container">
+                <OsmMap center={mapCenter} zoom={mapZoom} tracks={tracks} />
+              </div>
+            </>
+          )}
           <p className="event-detail-section-header">Статистика</p>
           <div className="event-detail-data-wrapper">
             <EventSummaryTable event={eventDetails.event} />
