@@ -1,34 +1,34 @@
-import React, { useEffect, useState } from "react";
+// import React, { useEffect, useState } from "react";
 
-import "./MapWidget.css";
-import OsmMap from "../../../components/common/OsmMap";
+// import "./MapWidget.css";
+// import OsmMap from "../../../components/common/OsmMap";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-const POSITION = [43.653, -79.38];
-const ZOOM = 9;
+// const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+// const POSITION = [43.653, -79.38];
+// const ZOOM = 9;
 
-const GPXTracksMap = () => {
-  const [tracks, setTracks] = useState([]);
+// const GPXTracksMap = () => {
+//   const [tracks, setTracks] = useState([]);
 
-  useEffect(() => {
-    // Fetch the tracks from the API
-    console.log("Fetching tracks from the API...");
-    fetch(`${API_BASE_URL}/api/tracks`)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Tracks fetched:", data);
-        setTracks(data);
-      })
-      .catch((err) => {
-        console.error("Error fetching tracks:", err);
-      });
-  }, []);
+//   useEffect(() => {
+//     // Fetch the tracks from the API
+//     console.log("Fetching tracks from the API...");
+//     fetch(`${API_BASE_URL}/api/tracks`)
+//       .then((response) => response.json())
+//       .then((data) => {
+//         console.log("Tracks fetched:", data);
+//         setTracks(data);
+//       })
+//       .catch((err) => {
+//         console.error("Error fetching tracks:", err);
+//       });
+//   }, []);
 
-  return (
-    <div className="custom-map-container">
-      <OsmMap center={POSITION} zoom={ZOOM} tracks={tracks} />
-    </div>
-  );
-};
+//   return (
+//     <div className="custom-map-container">
+//       <OsmMap center={POSITION} zoom={ZOOM} tracks={tracks} />
+//     </div>
+//   );
+// };
 
-export default GPXTracksMap;
+// export default GPXTracksMap;

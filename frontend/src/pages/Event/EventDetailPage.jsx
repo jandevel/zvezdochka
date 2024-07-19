@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import ImageGallery from 'react-image-gallery';
 import OsmMap from "../../components/common/OsmMap";
+import EventSummaryTable from './components/EventSummaryTable';
 
 import "./components/MapWidget.css";
 import 'react-image-gallery/styles/css/image-gallery.css';
@@ -86,8 +87,6 @@ const EventDetailPage = () => {
 
   const distance = calculateDistance(minLat, minLng, maxLat, maxLng);
   const mapZoom = getZoomLevel(distance);
-  console.log("Distance:", distance);
-  console.log("Zoom:", mapZoom);  
 
   // Function to format date and time
   const formatDate = (datetime) => {
@@ -95,11 +94,6 @@ const EventDetailPage = () => {
     return date.toLocaleDateString(); // adjust the locale and options as necessary
   };
 
-  const formatTime = (datetime) => {
-    const time = new Date(datetime);
-    return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // 24-hour format without seconds
-  };    
-  console.log("Data from API:", mapCenter);
   return (
     <div>
       {eventDetails ? (
@@ -132,54 +126,7 @@ const EventDetailPage = () => {
           </div>
           <p className="event-detail-section-header">Статистика</p>
           <div className="event-detail-data-wrapper">
-            <table className="event-summary-table">
-              <tbody>
-                <tr>
-                  <td>Дата:</td>
-                  <td>{formatDate(eventDetails.event.start_date)}</td>
-                </tr>
-                <tr>
-                  <td>Дистанция:</td>
-                  <td>{eventDetails.event.distance} км</td>
-                </tr>
-                <tr>
-                  <td>Время старта:</td>
-                  <td>{formatTime(eventDetails.event.start_date)}</td>
-                </tr>
-                <tr>
-                  <td>Время финиша:</td>
-                  <td>{formatTime(eventDetails.event.end_date)}</td>
-                </tr>
-                <tr>
-                  <td>Общее время:</td>
-                  <td>{eventDetails.event.time_total}</td>
-                </tr>
-                <tr>
-                  <td>Время в движении:</td>
-                  <td>{eventDetails.event.time_motion}</td>
-                </tr>
-                <tr>
-                  <td>Средняя скорость:</td>
-                  <td>{eventDetails.event.avg_speed}</td>
-                </tr>
-                <tr>
-                  <td>Средняя скорость в движении:</td>
-                  <td>{eventDetails.event.avg_motion_speed}</td>
-                </tr>
-                <tr>
-                  <td>Набор высоты:</td>
-                  <td>{eventDetails.event.uphill} м</td>
-                </tr>
-                <tr>
-                  <td>Сброс высоты:</td>
-                  <td>{eventDetails.event.downhill} м</td>
-                </tr>
-                <tr>
-                  <td>Перепад высот:</td>
-                  <td>{eventDetails.event.min_altitude} - {eventDetails.event.max_altitude} м</td>
-                </tr>
-              </tbody>
-            </table> 
+            <EventSummaryTable event={eventDetails.event} />
           </div>
           <div className="event-summary-footer"></div>                   
         </div>
