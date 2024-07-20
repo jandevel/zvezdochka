@@ -8,7 +8,7 @@ import "./OsmMap.css";
 
 const OsmMap = ({ center, zoom, tracks }) => {
   return (
-    <MapContainer className="map" zoom={zoom} center={center}>
+    <MapContainer className="map" zoom={zoom} center={center} attributionControl={false}>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
