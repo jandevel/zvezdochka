@@ -88,10 +88,14 @@ const EventDetailPage = () => {
   const distance = calculateDistance(minLat, minLng, maxLat, maxLng);
   const mapZoom = getZoomLevel(distance);
 
-  // Function to format date and time
+  // Function to format date
   const formatDate = (datetime) => {
     const date = new Date(datetime);
-    return date.toLocaleDateString(); // adjust the locale and options as necessary
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');  // Month is zero-indexed
+    const year = date.getFullYear();
+    
+    return `${day}-${month}-${year}`;  // Use template literals to format the date
   };
 
   return (

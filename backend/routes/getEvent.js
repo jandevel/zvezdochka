@@ -52,7 +52,7 @@ router.get("/api/events/:eventId", async (req, res, next) => {
       };
 
       res.json(response);
-      console.log(response);
+      // console.log(response);
     } else {
       res.status(404).send('Event not found');
     }
